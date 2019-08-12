@@ -10,6 +10,7 @@ import {
   UsePipes,
   ValidationPipe,
   ParseIntPipe,
+  Res,
 } from '@nestjs/common';
 
 // import { Task } from './task.model';
@@ -19,6 +20,7 @@ import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskStatusValidationPipe } from './pipe/task-status-validation.pipe';
 import { TaskEntity } from './task.entity';
 import { TaskStatus } from './task-status.enum';
+import { Response } from 'express';
 
 @Controller('tasks')
 export class TasksController {
