@@ -22,7 +22,7 @@ export class UserRepository extends Repository<UserEntity> {
       await user.save();
     } catch (error) {
       if (error.errno === 1062) {
-        //Código 1062 é username duplicado
+        // Código 1062 é username duplicado
         throw new ConflictException('Usuário já cadastrado.');
       } else {
         throw new InternalServerErrorException(
@@ -32,7 +32,20 @@ export class UserRepository extends Repository<UserEntity> {
     }
   }
 
+  async validateUserPassword(
+    authCredentialsDto: AuthCredentialsDto,
+  ): Promise<string> {
+    const { username, password } = authCredentialsDto;
+    const user = await this.findOne({ username });
+
+    if (user && (await user.validadePassword(password))) {
+      return user.username;
+    } else {
+      return null;
+    }
+  }
+
   private async hashPassword(password: string, salt: string): Promise<string> {
-    return bcrypt.hash(password, salt);
+    return await bcrypt.hash(password, salt);
   }
 }
