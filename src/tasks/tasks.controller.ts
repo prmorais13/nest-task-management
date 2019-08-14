@@ -20,7 +20,9 @@ import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskStatusValidationPipe } from './pipe/task-status-validation.pipe';
 import { TaskEntity } from './task.entity';
+import { UserEntity } from '../auth/user.entity';
 import { TaskStatus } from './task-status.enum';
+import { GetUser } from '../auth/get-user.decorator';
 
 @Controller('tasks')
 @UseGuards(AuthGuard())
@@ -30,8 +32,9 @@ export class TasksController {
   @Get()
   getTasks(
     @Query(ValidationPipe) filterDto: GetTasksFilterDto,
+    @GetUser() user: UserEntity,
   ): Promise<TaskEntity[]> {
-    return this.tasksService.getTasks(filterDto);
+    return this.tasksService.getTasks(filterDto, user);
   }
   // @Get()
   // getTasks(@Query(ValidationPipe) filterDto: GetTasksFilterDto): Task[] {
@@ -43,8 +46,11 @@ export class TasksController {
   // }
 
   @Get(':id')
-  getTaskById(@Param('id', ParseIntPipe) id: number): Promise<TaskEntity> {
-    return this.tasksService.getTaskbyId(id);
+  getTaskById(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserEntity,
+  ): Promise<TaskEntity> {
+    return this.tasksService.getTaskbyId(id, user);
   }
   // @Get(':id')
   // getTaskById(@Param('id') id: string): Task {
@@ -53,8 +59,11 @@ export class TasksController {
 
   @Post()
   @UsePipes(ValidationPipe)
-  createTask(@Body() createTaskDto: CreateTaskDto): Promise<TaskEntity> {
-    return this.tasksService.createTask(createTaskDto);
+  createTask(
+    @Body() createTaskDto: CreateTaskDto,
+    @GetUser() user: UserEntity,
+  ): Promise<TaskEntity> {
+    return this.tasksService.createTask(createTaskDto, user);
   }
   // @Post()
   // @UsePipes(ValidationPipe)
@@ -63,8 +72,11 @@ export class TasksController {
   // }
 
   @Delete(':id')
-  deleteTask(@Param('id', ParseIntPipe) id: number): Promise<void> {
-    return this.tasksService.deleteTask(id);
+  deleteTask(
+    @Param('id', ParseIntPipe) id: number,
+    @GetUser() user: UserEntity,
+  ): Promise<void> {
+    return this.tasksService.deleteTask(id, user);
   }
   // @Delete(':id')
   // deleteTask(@Param('id') id: string): void {
@@ -75,8 +87,9 @@ export class TasksController {
   updateTaskstatus(
     @Param('id', ParseIntPipe) id: number,
     @Body('status', TaskStatusValidationPipe) status: TaskStatus,
+    @GetUser() user: UserEntity,
   ): Promise<TaskEntity> {
-    return this.tasksService.updateTaskStatus(id, status);
+    return this.tasksService.updateTaskStatus(id, status, user);
   }
   // @Patch(':id/status')
   // updateTaskstatus(

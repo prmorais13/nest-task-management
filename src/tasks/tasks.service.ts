@@ -6,6 +6,7 @@ import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { TaskStatus } from './task-status.enum';
 import { TaskEntity } from './task.entity';
+import { UserEntity } from './../auth/user.entity';
 import { TaskRepository } from './task.repository';
 
 @Injectable()
@@ -17,12 +18,17 @@ export class TasksService {
     private taskRepository: TaskRepository,
   ) {}
 
-  async getTasks(filterDto: GetTasksFilterDto): Promise<TaskEntity[]> {
-    return this.taskRepository.getTasks(filterDto);
+  async getTasks(
+    filterDto: GetTasksFilterDto,
+    user: UserEntity,
+  ): Promise<TaskEntity[]> {
+    return this.taskRepository.getTasks(filterDto, user);
   }
 
-  async getTaskbyId(id: number): Promise<TaskEntity> {
-    const found = await this.taskRepository.findOne(id);
+  async getTaskbyId(id: number, user: UserEntity): Promise<TaskEntity> {
+    const found = await this.taskRepository.findOne(id, {
+      where: { id, userId: user.id },
+    });
     if (!found) {
       throw new NotFoundException(`Tarefa com ID: ${id} não encontrada!`);
     }
@@ -38,8 +44,11 @@ export class TasksService {
   // getAllTasks(): Task[] {
   //   return this.tasks;
   // }
-  async createTask(createTaskdto: CreateTaskDto): Promise<TaskEntity> {
-    return this.taskRepository.createTask(createTaskdto);
+  async createTask(
+    createTaskdto: CreateTaskDto,
+    user: UserEntity,
+  ): Promise<TaskEntity> {
+    return this.taskRepository.createTask(createTaskdto, user);
   }
 
   // createTask(createTaskdto: CreateTaskDto): Task {
@@ -54,8 +63,8 @@ export class TasksService {
   //   return task;
   // }
 
-  async deleteTask(id: number): Promise<void> {
-    const result = await this.taskRepository.delete(id);
+  async deleteTask(id: number, user: UserEntity): Promise<void> {
+    const result = await this.taskRepository.delete({ id, userId: user.id });
     if (result.affected === 0) {
       throw new NotFoundException(`Tarefa com ID: ${id} não encontrada!`);
     }
@@ -65,8 +74,12 @@ export class TasksService {
   //   this.tasks = this.tasks.filter(task => task.id !== found.id);
   // }
 
-  async updateTaskStatus(id: number, status: TaskStatus): Promise<TaskEntity> {
-    const task = await this.getTaskbyId(id);
+  async updateTaskStatus(
+    id: number,
+    status: TaskStatus,
+    user: UserEntity,
+  ): Promise<TaskEntity> {
+    const task = await this.getTaskbyId(id, user);
     task.status = status;
     task.save();
     return task;
