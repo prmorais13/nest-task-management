@@ -1,5 +1,9 @@
 import { Repository, EntityRepository } from 'typeorm';
-import { NotFoundException } from '@nestjs/common';
+import {
+  NotFoundException,
+  Logger,
+  InternalServerErrorException,
+} from '@nestjs/common';
 
 import { TaskEntity } from './task.entity';
 import { UserEntity } from '../auth/user.entity';
@@ -9,6 +13,8 @@ import { GetTasksFilterDto } from './dto/get-tasks-filter.dto';
 
 @EntityRepository(TaskEntity)
 export class TaskRepository extends Repository<TaskEntity> {
+  private logger = new Logger('TaskRepository');
+
   async getTasks(
     filterDto: GetTasksFilterDto,
     user: UserEntity,
@@ -28,6 +34,13 @@ export class TaskRepository extends Repository<TaskEntity> {
         { search: `%${search}%` },
       );
     }
+    // const tasks = await query.getMany();
+    // if (tasks.length === 0) {
+    //   throw new NotFoundException(
+    //     `Não há tarefas para os critérios informados!`,
+    //   );
+    // }
+    // return tasks;
 
     const tasks = await query.getMany();
     if (tasks.length === 0) {
@@ -35,7 +48,18 @@ export class TaskRepository extends Repository<TaskEntity> {
         `Não há tarefas para os critérios informados!`,
       );
     }
-    return tasks;
+
+    try {
+      return tasks;
+    } catch (error) {
+      this.logger.error(
+        `Falha ao buscar tarefa para o usuário "${
+          user.username
+        }". Filtros: ${JSON.stringify(filterDto)}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException();
+    }
   }
 
   async createTask(
@@ -49,7 +73,18 @@ export class TaskRepository extends Repository<TaskEntity> {
     task.description = description;
     task.status = TaskStatus.OPEN;
     task.user = user;
-    await task.save();
+
+    try {
+      await task.save();
+    } catch (error) {
+      this.logger.error(
+        `Falha ao criar tarefa para o usuário "${
+          user.username
+        }". Dados: ${JSON.stringify(createTaskDto)}`,
+        error.stack,
+      );
+      throw new InternalServerErrorException();
+    }
 
     delete task.user;
     return task;
